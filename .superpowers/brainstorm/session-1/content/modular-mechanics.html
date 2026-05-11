@@ -1,0 +1,49 @@
+<h2>Mechanics: The "Modular Garden"</h2>
+<p class="subtitle">Inspired by Mech Assemble: Roguelike upgrades for your central defense.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Game Loop: Roguelike Tower Defense</div>
+  <div class="mockup-body" style="background: #f1f8e9; padding: 15px;">
+    <div style="display: flex; gap: 10px; justify-content: space-between;">
+      <div style="flex: 1; background: white; padding: 10px; border-radius: 4px; border: 2px solid #4caf50;">
+        <h4 style="margin:0">1. Kill Pests</h4>
+        <p style="font-size: 12px;">Defeated pests explode into <strong>Seeds (XP/Currency)</strong>.</p>
+      </div>
+      <div style="flex: 1; background: white; padding: 10px; border-radius: 4px; border: 2px solid #2196f3;">
+        <h4 style="margin:0">2. Level Up</h4>
+        <p style="font-size: 12px;">Collect enough Seeds to trigger a <strong>Mutation Choice</strong>.</p>
+      </div>
+      <div style="flex: 1; background: white; padding: 10px; border-radius: 4px; border: 2px solid #ff9800;">
+        <h4 style="margin:0">3. Customize</h4>
+        <p style="font-size: 12px;">Add new <strong>modular parts</strong> (Thorn Sprayers, Acid Roots) to your Garden.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; text-align: center; border: 2px dashed #ccc; padding: 10px;">
+      <div style="font-size: 40px;">🏰</div>
+      <p><strong>Your Castle / Core</strong><br><small>Static position. You use the mouse to aim its active weapons<br>and place defensive plants around it.</small></p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>The Modular Choice</h3>
+  <p class="subtitle">How do we handle the "Mech Assemble" modularity?</p>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="slots" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Fixed Slots (The Castle Tower)</h3>
+      <p>The Castle has specific "hardpoints" (North, South, East, West). You equip specific plant-weapons to these slots and upgrade them individually.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="grid" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>The Spreading Garden (Grid-based)</h3>
+      <p>As you level up, you don't just upgrade the castle; you plant new towers on a grid. You choose *where* they go, creating a custom defensive layout every run.</p>
+    </div>
+  </div>
+</div>
