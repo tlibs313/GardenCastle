@@ -1,0 +1,23 @@
+import { Plant } from './Plant';
+
+export class ObjectivePlant extends Plant {
+  public growthProgress: number = 0;
+  public targetLevel: number = 5;
+  private levelText: Phaser.GameObjects.Text;
+
+  constructor(scene: Phaser.Scene, x: number, y: number) {
+    super(scene, x, y, 'rose', 'objective');
+    this.levelText = scene.add.text(x, y + 20, `Lvl: ${this.level}`, { fontSize: '12px' }).setOrigin(0.5);
+  }
+
+  update(delta: number) {
+    if (this.level < this.targetLevel) {
+      this.growthProgress += delta * 0.01;
+      if (this.growthProgress >= 100) {
+        this.level++;
+        this.growthProgress = 0;
+        this.levelText.setText(`Lvl: ${this.level}`);
+      }
+    }
+  }
+}
