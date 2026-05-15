@@ -129,6 +129,15 @@ export class MainScene extends Phaser.Scene {
       }
     });
 
+    this.events.on('weather-changed', (event: string) => {
+      if (event === 'rain') {
+        this.plantsGroup.getChildren().forEach(gameObject => {
+          const p = gameObject as Plant;
+          p.hydration = 100;
+        });
+      }
+    });
+
     // Hover Stats
     this.statsText = this.add.text(0, 0, '', { fontSize: '12px', color: '#fff', backgroundColor: '#000', padding: { x: 5, y: 5 } });
     this.hoverStats = this.add.container(0, 0, [this.statsText]);
