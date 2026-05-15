@@ -1,12 +1,23 @@
 import Phaser from 'phaser';
 import { ObjectivePlant } from '../entities/ObjectivePlant';
 import { Plant } from '../entities/Plant';
+import { Aphid } from '../entities/Aphid';
 
 export class MainScene extends Phaser.Scene {
   private plants: Plant[] = [];
+  private pests!: Phaser.Physics.Arcade.Group;
 
   constructor() {
     super('MainScene');
+  }
+
+  preload() {
+    // Create a simple colored circle for aphid placeholder
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0x00ff00, 1);
+    graphics.fillCircle(10, 10, 10);
+    graphics.generateTexture('aphid-placeholder', 20, 20);
+    graphics.destroy();
   }
 
   create() {
@@ -22,7 +33,21 @@ export class MainScene extends Phaser.Scene {
     graphics.strokePath();
 
     // Central Castle Placeholder
-    this.add.text(400, 300, '🏰', { fontSize: '48px' }).setOrigin(0.5);
+    this.add.text(400, 300, '??', { fontSize: '48px' }).setOrigin(0.5);
+
+    // Physics groups
+    this.pests = this.physics.add.group({
+      classType: Aphid,
+      runChildUpdate: true
+    });
+
+    // Spawn timer
+    this.time.addEvent({
+      delay: 3000,
+      callback: this.spawnPest,
+      callbackScope: this,
+      loop: true
+    });
 
     // Click to plant mechanic
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
@@ -39,11 +64,40 @@ export class MainScene extends Phaser.Scene {
     });
   }
 
+  spawnPest() {
+    let x, y;
+    const side = Phaser.Math.Between(0, 3);
+    
+    switch(side) {
+      case 0: // Top
+        x = Phaser.Math.Between(0, 800);
+        y = -20;
+        break;
+      case 1: // Right
+        x = 820;
+        y = Phaser.Math.Between(0, 600);
+        break;
+      case 2: // Bottom
+        x = Phaser.Math.Between(0, 800);
+        y = 620;
+        break;
+      default: // Left
+        x = -20;
+        y = Phaser.Math.Between(0, 600);
+        break;
+    }
+
+    const aphid = new Aphid(this, x, y);
+    this.pests.add(aphid);
+  }
+
   update(time: number, delta: number) {
     this.plants.forEach(plant => {
       if (plant.update) {
         plant.update(delta);
       }
     });
+    
+    // Pests group runChildUpdate: true handles their individual update()
   }
 }
