@@ -12,19 +12,20 @@ interface CareerState {
   unlockedNodes: string[];
   stats: CareerStats;
   /**
-   * Adds Research Points to the total.
-   * @param amount The number of RP to add.
+   * Adds Research Points to the total career pool.
+   * @param amount The amount of RP to add.
    */
   addRP: (amount: number) => void;
   /**
-   * Unlocks a node if the player has enough RP and it's not already unlocked.
-   * @param nodeId Unique identifier for the node to unlock.
-   * @param cost The cost in RP to unlock the node.
+   * Unlocks a research node if requirements are met.
+   * Checks for sufficient RP and prevents duplicate unlocks.
+   * @param nodeId The unique identifier of the node.
+   * @param cost The RP cost to unlock.
    */
   unlockNode: (nodeId: string, cost: number) => void;
   /**
-   * Updates career statistics with partial data.
-   * @param newStats Object containing stats to update.
+   * Updates career statistics with the provided partial stats.
+   * @param newStats Partial career stats to merge into the current stats.
    */
   updateStats: (newStats: Partial<CareerStats>) => void;
 }
@@ -42,8 +43,8 @@ export const useCareerStore = create<CareerState>()(
       addRP: (amount) => set((state) => ({ totalRP: state.totalRP + amount })),
       unlockNode: (nodeId, cost) =>
         set((state) => {
-          // Check if already unlocked or insufficient RP
-          if (state.unlockedNodes.includes(nodeId) || state.totalRP < cost) {
+          // Defensive checks: ensure sufficient RP and no duplicate unlocks
+          if (state.totalRP < cost || state.unlockedNodes.includes(nodeId)) {
             return state;
           }
           return {
@@ -52,7 +53,9 @@ export const useCareerStore = create<CareerState>()(
           };
         }),
       updateStats: (newStats) =>
-        set((state) => ({ stats: { ...state.stats, ...newStats } })),
+        set((state) => ({
+          stats: { ...state.stats, ...newStats },
+        })),
     }),
     {
       name: 'garden-castle-career',
