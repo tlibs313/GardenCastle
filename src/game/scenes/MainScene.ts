@@ -1,12 +1,16 @@
 import Phaser from 'phaser';
 import { ObjectivePlant } from '../entities/ObjectivePlant';
+import { OffensivePlant } from '../entities/OffensivePlant';
 import { Plant } from '../entities/Plant';
 import { Aphid } from '../entities/Aphid';
 import { Pest } from '../entities/Pest';
+import { Seed } from '../entities/Seed';
 
 export class MainScene extends Phaser.Scene {
-  private plantsGroup!: Phaser.Physics.Arcade.StaticGroup;
-  private pestsGroup!: Phaser.Physics.Arcade.Group;
+  public plantsGroup!: Phaser.Physics.Arcade.StaticGroup;
+  public pestsGroup!: Phaser.Physics.Arcade.Group;
+  public seedsGroup!: Phaser.Physics.Arcade.Group;
+  private shiftKey!: Phaser.Input.Keyboard.Key;
 
   constructor() {
     super('MainScene');
@@ -14,9 +18,18 @@ export class MainScene extends Phaser.Scene {
 
   preload() {
     const graphics = this.add.graphics();
+    
+    // Aphid placeholder
     graphics.fillStyle(0x00ff00, 1);
     graphics.fillCircle(10, 10, 10);
     graphics.generateTexture('aphid-placeholder', 20, 20);
+    graphics.clear();
+
+    // Seed placeholder
+    graphics.fillStyle(0xffffff, 1);
+    graphics.fillCircle(5, 5, 5);
+    graphics.generateTexture('seed-placeholder', 10, 10);
+    
     graphics.destroy();
   }
 
@@ -33,20 +46,37 @@ export class MainScene extends Phaser.Scene {
 
     this.add.text(400, 300, '🏰', { fontSize: '48px' }).setOrigin(0.5);
 
+    // Keys
+    if (this.input.keyboard) {
+      this.shiftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+    }
+
     // Initialize groups
     this.plantsGroup = this.physics.add.staticGroup();
     this.pestsGroup = this.physics.add.group({
       classType: Aphid,
       runChildUpdate: true
     });
+    this.seedsGroup = this.physics.add.group({
+      classType: Seed,
+      runChildUpdate: true
+    });
 
-    // Collision/Overlap logic
+    // Collision: Pest vs Plant (Attachment)
     this.physics.add.overlap(this.pestsGroup, this.plantsGroup, (pest, plant) => {
       const p = pest as Pest;
       const pl = plant as Plant;
       if (!p.isAttached) {
         pl.attachPest(p);
       }
+    });
+
+    // Collision: Seed vs Pest
+    this.physics.add.overlap(this.seedsGroup, this.pestsGroup, (seed, pest) => {
+      const s = seed as Seed;
+      const p = pest as Aphid;
+      p.squish(); // For now, 1 hit kill
+      s.destroy();
     });
 
     // Spawn timer
@@ -66,7 +96,12 @@ export class MainScene extends Phaser.Scene {
         const snappedX = gridX * 40 + 200 + 20;
         const snappedY = gridY * 40 + 100 + 20;
 
-        const plant = new ObjectivePlant(this, snappedX, snappedY);
+        let plant;
+        if (this.shiftKey?.isDown) {
+          plant = new OffensivePlant(this, snappedX, snappedY);
+        } else {
+          plant = new ObjectivePlant(this, snappedX, snappedY);
+        }
         this.plantsGroup.add(plant);
       }
     });
