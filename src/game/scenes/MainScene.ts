@@ -2,17 +2,17 @@ import Phaser from 'phaser';
 import { ObjectivePlant } from '../entities/ObjectivePlant';
 import { Plant } from '../entities/Plant';
 import { Aphid } from '../entities/Aphid';
+import { Pest } from '../entities/Pest';
 
 export class MainScene extends Phaser.Scene {
-  private plants: Plant[] = [];
-  private pests!: Phaser.Physics.Arcade.Group;
+  private plantsGroup!: Phaser.Physics.Arcade.StaticGroup;
+  private pestsGroup!: Phaser.Physics.Arcade.Group;
 
   constructor() {
     super('MainScene');
   }
 
   preload() {
-    // Create a simple colored circle for aphid placeholder
     const graphics = this.add.graphics();
     graphics.fillStyle(0x00ff00, 1);
     graphics.fillCircle(10, 10, 10);
@@ -21,7 +21,6 @@ export class MainScene extends Phaser.Scene {
   }
 
   create() {
-    // Draw 10x10 garden grid
     const graphics = this.add.graphics();
     graphics.lineStyle(2, 0x2e7d32, 0.5);
     for (let i = 0; i <= 10; i++) {
@@ -32,13 +31,22 @@ export class MainScene extends Phaser.Scene {
     }
     graphics.strokePath();
 
-    // Central Castle Placeholder
-    this.add.text(400, 300, '??', { fontSize: '48px' }).setOrigin(0.5);
+    this.add.text(400, 300, '🏰', { fontSize: '48px' }).setOrigin(0.5);
 
-    // Physics groups
-    this.pests = this.physics.add.group({
+    // Initialize groups
+    this.plantsGroup = this.physics.add.staticGroup();
+    this.pestsGroup = this.physics.add.group({
       classType: Aphid,
       runChildUpdate: true
+    });
+
+    // Collision/Overlap logic
+    this.physics.add.overlap(this.pestsGroup, this.plantsGroup, (pest, plant) => {
+      const p = pest as Pest;
+      const pl = plant as Plant;
+      if (!p.isAttached) {
+        pl.attachPest(p);
+      }
     });
 
     // Spawn timer
@@ -59,7 +67,7 @@ export class MainScene extends Phaser.Scene {
         const snappedY = gridY * 40 + 100 + 20;
 
         const plant = new ObjectivePlant(this, snappedX, snappedY);
-        this.plants.push(plant);
+        this.plantsGroup.add(plant);
       }
     });
   }
@@ -67,37 +75,19 @@ export class MainScene extends Phaser.Scene {
   spawnPest() {
     let x, y;
     const side = Phaser.Math.Between(0, 3);
-    
     switch(side) {
-      case 0: // Top
-        x = Phaser.Math.Between(0, 800);
-        y = -20;
-        break;
-      case 1: // Right
-        x = 820;
-        y = Phaser.Math.Between(0, 600);
-        break;
-      case 2: // Bottom
-        x = Phaser.Math.Between(0, 800);
-        y = 620;
-        break;
-      default: // Left
-        x = -20;
-        y = Phaser.Math.Between(0, 600);
-        break;
+      case 0: x = Phaser.Math.Between(0, 800); y = -20; break;
+      case 1: x = 820; y = Phaser.Math.Between(0, 600); break;
+      case 2: x = Phaser.Math.Between(0, 800); y = 620; break;
+      default: x = -20; y = Phaser.Math.Between(0, 600); break;
     }
-
     const aphid = new Aphid(this, x, y);
-    this.pests.add(aphid);
+    this.pestsGroup.add(aphid);
   }
 
   update(time: number, delta: number) {
-    this.plants.forEach(plant => {
-      if (plant.update) {
-        plant.update(delta);
-      }
+    this.plantsGroup.getChildren().forEach(plant => {
+      (plant as Plant).update(delta);
     });
-    
-    // Pests group runChildUpdate: true handles their individual update()
   }
 }

@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import { Plant } from './Plant';
 
 export class ObjectivePlant extends Plant {
@@ -7,10 +8,17 @@ export class ObjectivePlant extends Plant {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'rose', 'objective');
-    this.levelText = scene.add.text(x, y + 20, `Lvl: ${this.level}`, { fontSize: '12px' }).setOrigin(0.5);
+    this.levelText = scene.add.text(x, y + 20, `Lvl: ${this.level}`, { fontSize: '12px' }).setOrigin(0.5);      
   }
 
   update(delta: number) {
+    // Corruption logic: Stop growth if pests are attached
+    if (this.attachedPests.length > 0) {
+      // Deal small damage over time
+      this.takeDamage(0.01 * delta);
+      return; 
+    }
+
     if (this.level < this.targetLevel) {
       this.growthProgress += delta * 0.01;
       if (this.growthProgress >= 100) {

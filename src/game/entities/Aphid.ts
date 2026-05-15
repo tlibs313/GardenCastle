@@ -5,8 +5,25 @@ export class Aphid extends Pest {
   private timeElapsed: number = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    // Use a placeholder texture string for now
     super(scene, x, y, 'aphid-placeholder');
+    
+    // Enable input for manual squish
+    this.setInteractive();
+    this.on('pointerdown', () => {
+      this.squish();
+    });
+  }
+
+  public squish() {
+    // Notify target plant if attached
+    if (this.targetPlant) {
+      this.targetPlant.removePest(this);
+    }
+    
+    // Trigger splatter effect (to be implemented in Task 4)
+    this.scene.events.emit('pest-squished', this.x, this.y);
+    
+    this.destroy();
   }
 
   update(time: number, delta: number) {
@@ -19,7 +36,7 @@ export class Aphid extends Pest {
     const targetY = 300;
 
     const angle = Phaser.Math.Angle.Between(this.x, this.y, targetX, targetY);
-    
+
     // Base velocity toward target
     const vx = Math.cos(angle) * this.speed;
     const vy = Math.sin(angle) * this.speed;
