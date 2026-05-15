@@ -12,6 +12,19 @@ export class OffensivePlant extends Plant {
     super(scene, x, y, 'cactus', 'offensive');
   }
 
+  public getSpeciesId(): string {
+    return 'cactus';
+  }
+
+  public getBaseRP(): number {
+    return 10;
+  }
+
+  public getDensityMultiplier(count: number): number {
+    // Competitive: 1.0 / (Count * 0.5)
+    return 1.0 / (count * 0.5);
+  }
+
   update(delta: number) {
     super.update(delta);
     

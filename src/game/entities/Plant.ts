@@ -4,6 +4,7 @@ import { MainScene } from '../scenes/MainScene';
 
 export abstract class Plant extends Phaser.Physics.Arcade.Sprite {
   public health: number = 100;
+  public maxHealth: number = 100;
   public level: number = 1;
   public plantType: 'objective' | 'defensive' | 'offensive';
   public attachedPests: Pest[] = [];
@@ -20,6 +21,10 @@ export abstract class Plant extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this, true); // Static body
   }
+
+  public abstract getSpeciesId(): string;
+  public abstract getBaseRP(): number;
+  public abstract getDensityMultiplier(count: number): number;
 
   public update(delta: number) {
     // Decrease hydration slowly over time

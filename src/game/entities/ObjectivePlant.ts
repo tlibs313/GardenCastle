@@ -11,6 +11,19 @@ export class ObjectivePlant extends Plant {
     this.levelText = scene.add.text(x, y + 20, `Lvl: ${this.level}`, { fontSize: '12px' }).setOrigin(0.5);      
   }
 
+  public getSpeciesId(): string {
+    return 'rose';
+  }
+
+  public getBaseRP(): number {
+    return 50;
+  }
+
+  public getDensityMultiplier(count: number): number {
+    // Symbiotic: 1.0 + (Count * 0.1)
+    return 1.0 + count * 0.1;
+  }
+
   update(delta: number) {
     super.update(delta);
     

@@ -6,6 +6,10 @@ class TestPlant extends Plant {
   constructor(scene: any, x: number, y: number) {
     super(scene, x, y, 'test-texture', 'objective');
   }
+
+  getSpeciesId() { return 'test-species'; }
+  getBaseRP() { return 0; }
+  getDensityMultiplier(count: number) { return 1.0; }
 }
 
 vi.mock('phaser', () => {
