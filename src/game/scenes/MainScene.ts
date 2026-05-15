@@ -5,6 +5,7 @@ import { Plant } from '../entities/Plant';
 import { Aphid } from '../entities/Aphid';
 import { Pest } from '../entities/Pest';
 import { Seed } from '../entities/Seed';
+import { EnvironmentManager } from '../managers/EnvironmentManager';
 
 export class MainScene extends Phaser.Scene {
   public plantsGroup!: Phaser.Physics.Arcade.StaticGroup;
@@ -12,6 +13,8 @@ export class MainScene extends Phaser.Scene {
   public seedsGroup!: Phaser.Physics.Arcade.Group;
   private shiftKey!: Phaser.Input.Keyboard.Key;
   private splatterEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private environmentManager!: EnvironmentManager;
+  private nightOverlay!: Phaser.GameObjects.Rectangle;
 
   constructor() {
     super('MainScene');
@@ -19,7 +22,7 @@ export class MainScene extends Phaser.Scene {
 
   preload() {
     const graphics = this.add.graphics();
-    
+
     // Aphid placeholder
     graphics.fillStyle(0x00ff00, 1);
     graphics.fillCircle(10, 10, 10);
@@ -36,7 +39,7 @@ export class MainScene extends Phaser.Scene {
     graphics.fillStyle(0x00ff00, 0.8);
     graphics.fillRect(0, 0, 4, 4);
     graphics.generateTexture('splatter-particle', 4, 4);
-    
+
     graphics.destroy();
   }
 
@@ -101,6 +104,27 @@ export class MainScene extends Phaser.Scene {
       s.destroy();
     });
 
+    // Environment
+    this.environmentManager = new EnvironmentManager(this);
+    this.nightOverlay = this.add.rectangle(400, 300, 800, 600, 0x000033, 0);
+    this.nightOverlay.setDepth(100); // Above most things
+
+    this.events.on('cycle-changed', (cycle: 'day' | 'night') => {
+      if (cycle === 'night') {
+        this.tweens.add({
+          targets: this.nightOverlay,
+          fillAlpha: 0.4,
+          duration: 2000
+        });
+      } else {
+        this.tweens.add({
+          targets: this.nightOverlay,
+          fillAlpha: 0,
+          duration: 2000
+        });
+      }
+    });
+
     // Spawn timer
     this.time.addEvent({
       delay: 3000,
@@ -143,6 +167,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number) {
+    this.environmentManager.update(delta);
     this.plantsGroup.getChildren().forEach(plant => {
       (plant as Plant).update(delta);
     });
