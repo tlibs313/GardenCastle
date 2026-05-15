@@ -47,4 +47,19 @@ describe('useCareerStore', () => {
     expect(useCareerStore.getState().stats.pestsPopped).toBe(50);
     expect(useCareerStore.getState().stats.plantsHarvested).toBe(0);
   });
+
+  it('should not unlock a node if RP is insufficient', () => {
+    useCareerStore.setState({ totalRP: 30 });
+    useCareerStore.getState().unlockNode('expensive-node', 40);
+    expect(useCareerStore.getState().totalRP).toBe(30);
+    expect(useCareerStore.getState().unlockedNodes).not.toContain('expensive-node');
+  });
+
+  it('should not add duplicate nodeIds to unlockedNodes', () => {
+    useCareerStore.setState({ totalRP: 100 });
+    useCareerStore.getState().unlockNode('test-node', 40);
+    useCareerStore.getState().unlockNode('test-node', 40);
+    expect(useCareerStore.getState().unlockedNodes).toEqual(['test-node']);
+    expect(useCareerStore.getState().totalRP).toBe(60); // Second attempt should not subtract RP
+  });
 });
