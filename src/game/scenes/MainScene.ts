@@ -11,6 +11,7 @@ export class MainScene extends Phaser.Scene {
   public pestsGroup!: Phaser.Physics.Arcade.Group;
   public seedsGroup!: Phaser.Physics.Arcade.Group;
   private shiftKey!: Phaser.Input.Keyboard.Key;
+  private splatterEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor() {
     super('MainScene');
@@ -29,6 +30,12 @@ export class MainScene extends Phaser.Scene {
     graphics.fillStyle(0xffffff, 1);
     graphics.fillCircle(5, 5, 5);
     graphics.generateTexture('seed-placeholder', 10, 10);
+    graphics.clear();
+
+    // Splatter particle placeholder
+    graphics.fillStyle(0x00ff00, 0.8);
+    graphics.fillRect(0, 0, 4, 4);
+    graphics.generateTexture('splatter-particle', 4, 4);
     
     graphics.destroy();
   }
@@ -45,6 +52,21 @@ export class MainScene extends Phaser.Scene {
     graphics.strokePath();
 
     this.add.text(400, 300, '🏰', { fontSize: '48px' }).setOrigin(0.5);
+
+    // Particles
+    this.splatterEmitter = this.add.particles(0, 0, 'splatter-particle', {
+      speed: { min: 50, max: 150 },
+      scale: { start: 1, end: 0 },
+      alpha: { start: 0.8, end: 0 },
+      lifespan: 800,
+      gravityY: 100,
+      emitting: false
+    });
+
+    // Listen for squish event
+    this.events.on('pest-squished', (x: number, y: number) => {
+      this.splatterEmitter.explode(15, x, y);
+    });
 
     // Keys
     if (this.input.keyboard) {
@@ -75,7 +97,7 @@ export class MainScene extends Phaser.Scene {
     this.physics.add.overlap(this.seedsGroup, this.pestsGroup, (seed, pest) => {
       const s = seed as Seed;
       const p = pest as Aphid;
-      p.squish(); // For now, 1 hit kill
+      p.squish();
       s.destroy();
     });
 
