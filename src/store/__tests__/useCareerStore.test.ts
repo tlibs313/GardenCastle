@@ -72,4 +72,47 @@ describe('useCareerStore', () => {
     expect(useCareerStore.getState().stats.plantsHarvested).toBe(10);
     expect(useCareerStore.getState().stats.pestsPopped).toBe(50);
   });
+
+  it('should only add RP if amount is positive', () => {
+    useCareerStore.getState().addRP(100);
+    useCareerStore.getState().addRP(-50);
+    expect(useCareerStore.getState().totalRP).toBe(100);
+    
+    useCareerStore.getState().addRP(0);
+    expect(useCareerStore.getState().totalRP).toBe(100);
+  });
+
+  it('should only increase highestDifficultyCleared', () => {
+    useCareerStore.getState().updateStats({ highestDifficultyCleared: 5 });
+    expect(useCareerStore.getState().stats.highestDifficultyCleared).toBe(5);
+    
+    useCareerStore.getState().updateStats({ highestDifficultyCleared: 3 });
+    expect(useCareerStore.getState().stats.highestDifficultyCleared).toBe(5);
+
+    useCareerStore.getState().updateStats({ highestDifficultyCleared: 7 });
+    expect(useCareerStore.getState().stats.highestDifficultyCleared).toBe(7);
+  });
+
+  it('should reset the career store correctly', () => {
+    useCareerStore.setState({
+      totalRP: 500,
+      unlockedNodes: ['node-1', 'node-2'],
+      stats: {
+        pestsPopped: 100,
+        plantsHarvested: 20,
+        highestDifficultyCleared: 5,
+      },
+    });
+
+    useCareerStore.getState().resetCareer();
+
+    const state = useCareerStore.getState();
+    expect(state.totalRP).toBe(0);
+    expect(state.unlockedNodes).toEqual([]);
+    expect(state.stats).toEqual({
+      pestsPopped: 0,
+      plantsHarvested: 0,
+      highestDifficultyCleared: 0,
+    });
+  });
 });

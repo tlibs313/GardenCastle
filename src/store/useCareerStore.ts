@@ -13,6 +13,7 @@ interface CareerState {
   stats: CareerStats;
   /**
    * Adds Research Points to the total career pool.
+   * Only positive amounts are added.
    * @param amount The amount of RP to add.
    */
   addRP: (amount: number) => void;
@@ -25,22 +26,36 @@ interface CareerState {
   unlockNode: (nodeId: string, cost: number) => void;
   /**
    * Updates career statistics with the provided partial stats.
+   * highestDifficultyCleared can only be increased.
    * @param newStats Partial career stats to merge into the current stats.
    */
   updateStats: (newStats: Partial<CareerStats>) => void;
+  /**
+   * Resets the career store to its initial state and clears persistent storage.
+   */
+  resetCareer: () => void;
 }
+
+const initialStats: CareerStats = {
+  pestsPopped: 0,
+  plantsHarvested: 0,
+  highestDifficultyCleared: 0,
+};
+
+const initialState = {
+  totalRP: 0,
+  unlockedNodes: [],
+  stats: initialStats,
+};
 
 export const useCareerStore = create<CareerState>()(
   persist(
     (set) => ({
-      totalRP: 0,
-      unlockedNodes: [],
-      stats: {
-        pestsPopped: 0,
-        plantsHarvested: 0,
-        highestDifficultyCleared: 0,
+      ...initialState,
+      addRP: (amount) => {
+        if (amount <= 0) return;
+        set((state) => ({ totalRP: state.totalRP + amount }));
       },
-      addRP: (amount) => set((state) => ({ totalRP: state.totalRP + amount })),
       unlockNode: (nodeId, cost) =>
         set((state) => {
           // Defensive checks: ensure sufficient RP and no duplicate unlocks
@@ -53,9 +68,23 @@ export const useCareerStore = create<CareerState>()(
           };
         }),
       updateStats: (newStats) =>
-        set((state) => ({
-          stats: { ...state.stats, ...newStats },
-        })),
+        set((state) => {
+          const updatedStats = { ...state.stats, ...newStats };
+          
+          // Ensure highestDifficultyCleared can only be increased
+          if (newStats.highestDifficultyCleared !== undefined) {
+            updatedStats.highestDifficultyCleared = Math.max(
+              state.stats.highestDifficultyCleared,
+              newStats.highestDifficultyCleared
+            );
+          }
+          
+          return { stats: updatedStats };
+        }),
+      resetCareer: () => {
+        set(initialState);
+        useCareerStore.persist?.clearStorage();
+      },
     }),
     {
       name: 'garden-castle-career',
