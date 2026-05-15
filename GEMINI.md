@@ -21,8 +21,9 @@ GardenCastle is a "Whimsical Splatter" Tower Defense game built with React, Type
 
 ## Development Status
 - **Phase 1 (Complete):** Project scaffolded, Phaser integrated, grid system and plant entities implemented.
-- **Current Branch:** `feature/phase-1` (in `.worktrees/phase-1`)
-- **Next Phase:** Phase 2: Pests & Tactical Defense.
+- **Phase 2 (Complete):** Pests (Aphids) implemented with chaotic movement, manual squish interaction, and seed spray offensive mechanics.
+- **Phase 3 (Complete):** Environmental simulation implemented: Soil types, Day/Night cycles, Hydration/Light needs, and Weather Forecast HUD.
+- **Next Phase:** Phase 4: Evolution Trees & Career Research.
 
 ## Conventions
 - Follow TDD (Test Driven Development).

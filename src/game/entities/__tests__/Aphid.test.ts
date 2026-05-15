@@ -21,6 +21,8 @@ vi.mock('phaser', () => {
     setAcceleration() { return this; }
     setVelocity() { return this; }
     setOrigin() { return this; }
+    setInteractive() { return this; }
+    on() { return this; }
   }
 
   return {

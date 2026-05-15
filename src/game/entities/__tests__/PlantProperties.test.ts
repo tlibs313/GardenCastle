@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Plant } from '../Plant';
+import { PLANT_CONSTANTS } from '../../constants';
 
 // We need a concrete class to test the abstract Plant
 class TestPlant extends Plant {
@@ -36,6 +37,7 @@ vi.mock('phaser', () => {
       return this; 
     }
     setOrigin() { return this; }
+    getBounds() { return { x: this.x, y: this.y, width: 32, height: 32 }; }
   }
 
   return {
@@ -68,45 +70,45 @@ describe('Plant Properties', () => {
     mockScene = {
       add: { existing: vi.fn() },
       physics: { add: { existing: vi.fn() } },
-      timeOfDay: 0.5 // Default mid-day
+      environmentManager: { timeOfDay: 'day' }
     };
     plant = new TestPlant(mockScene, 100, 100);
   });
 
   it('should have initial hydration and light level', () => {
-    expect(plant.hydration).toBe(80);
-    expect(plant.lightLevel).toBe(50);
+    expect(plant.hydration).toBe(PLANT_CONSTANTS.INITIAL_HYDRATION);
+    expect(plant.lightLevel).toBe(PLANT_CONSTANTS.INITIAL_LIGHT_LEVEL);
   });
 
   it('should decrease hydration over time', () => {
     const initialHydration = plant.hydration;
     plant.update(1000); // 1 second
-    expect(plant.hydration).toBeLessThan(initialHydration);
+    expect(plant.hydration).toBe(initialHydration - PLANT_CONSTANTS.HYDRATION_DECREASE_RATE * 1000);
   });
 
-  it('should update lightLevel based on scene timeOfDay', () => {
-    mockScene.timeOfDay = 0; // Midnight
+  it('should update lightLevel based on environmentManager timeOfDay', () => {
+    mockScene.environmentManager.timeOfDay = 'night';
     plant.update(1000);
-    expect(plant.lightLevel).toBeLessThan(50);
+    expect(plant.lightLevel).toBe(PLANT_CONSTANTS.LIGHT_LEVELS.NIGHT);
 
-    mockScene.timeOfDay = 0.5; // Noon
+    mockScene.environmentManager.timeOfDay = 'day';
     plant.update(1000);
-    expect(plant.lightLevel).toBeGreaterThan(0);
+    expect(plant.lightLevel).toBe(PLANT_CONSTANTS.LIGHT_LEVELS.DAY);
   });
 
   it('should wilt when hydration is low', () => {
-    plant.hydration = 20;
+    plant.hydration = PLANT_CONSTANTS.THRESHOLDS.WILTING - 10;
     plant.update(0);
     expect(plant.isWilting).toBe(true);
-    expect(plant.tint).toBe(0x884400);
+    expect(plant.tint).toBe(PLANT_CONSTANTS.TINTS.WILTING);
   });
 
   it('should glow when hydration and light are high', () => {
-    plant.hydration = 90;
-    plant.lightLevel = 90;
+    plant.hydration = PLANT_CONSTANTS.THRESHOLDS.GLOWING + 10;
+    plant.lightLevel = PLANT_CONSTANTS.THRESHOLDS.GLOWING + 10;
     plant.update(0);
     expect(plant.isGlowing).toBe(true);
-    expect(plant.tint).toBe(0xffff00);
+    expect(plant.tint).toBe(PLANT_CONSTANTS.TINTS.GLOWING);
   });
 
   it('should clear tint when stats are normal', () => {

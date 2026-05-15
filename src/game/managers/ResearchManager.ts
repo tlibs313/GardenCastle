@@ -1,4 +1,5 @@
 import { Plant } from '../entities/Plant';
+import { RESEARCH_CONSTANTS } from '../constants';
 
 /**
  * Manages calculations related to Research Points (RP).
@@ -8,6 +9,8 @@ export class ResearchManager {
    * Calculates the total Research Points (RP) earned from a set of plants.
    * 
    * Formula: Σ ([Base RP] + [Health Bonus]) * [Difficulty Multiplier] * [Density Multiplier]
+   * 
+   * Health Bonus: (Current Health / Max Health) * 10.
    * 
    * @param plants List of plants harvested.
    * @param difficulty Current game difficulty multiplier.
@@ -27,8 +30,8 @@ export class ResearchManager {
       // Base RP from entity
       const base = p.getBaseRP();
 
-      // Health Bonus: (Current Health / Max Health) * 10.
-      const healthBonus = (p.health / p.maxHealth) * 10;
+      // Health Bonus: (Current Health / Max Health) * RESEARCH_CONSTANTS.HEALTH_BONUS_SCALE.
+      const healthBonus = (p.health / p.maxHealth) * RESEARCH_CONSTANTS.HEALTH_BONUS_SCALE;
 
       // Density Multiplier from entity
       const densityMult = p.getDensityMultiplier(speciesCounts[p.getSpeciesId()]);

@@ -15,7 +15,7 @@ export const WeatherHUD: React.FC = () => {
       borderRadius: '8px',
       fontFamily: 'monospace',
       pointerEvents: 'none',
-      zIndex: 1000
+      zIndex: 500
     }}>
       <h3 style={{ margin: '0 0 10px 0', color: '#4caf50' }}>Weather Station</h3>
       <div>Time: <span style={{ color: timeOfDay === 'day' ? '#ffeb3b' : '#9c27b0' }}>{timeOfDay.toUpperCase()}</span></div>

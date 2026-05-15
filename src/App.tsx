@@ -3,10 +3,11 @@ import Phaser from 'phaser';
 import { config } from './game/config';
 import { WeatherHUD } from './components/WeatherHUD';
 import { EvolutionHub } from './components/EvolutionHub';
+import { useGameStore } from './store/useGameStore';
 
 function App() {
   const gameRef = useRef<Phaser.Game | null>(null);
-  const [isHubOpen, setIsHubOpen] = useState(false);
+  const { isHubOpen, setHubOpen } = useGameStore();
 
   useEffect(() => {
     if (!gameRef.current) {
@@ -34,11 +35,14 @@ function App() {
 
   return (
     <div className="App" style={{ position: 'relative', height: '100vh', width: '100vw', backgroundColor: '#1a1a1a', overflow: 'hidden' }}>
-      <header style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
-        <h1 style={{ margin: 0, color: 'white', fontSize: '1.5rem', fontWeight: '900', textTransform: 'uppercase', fontStyle: 'italic' }}>GardenCastle</h1>
+      <header style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '1rem', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', zIndex: 1001 }}>
+        <h1 style={{ margin: '0 1rem 0 0', color: 'white', fontSize: '1.5rem', fontWeight: '900', textTransform: 'uppercase', fontStyle: 'italic' }}>GardenCastle</h1>
         <button 
-          onClick={() => setIsHubOpen(true)}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
+          onClick={() => {
+            console.log("Opening Hub...");
+            setHubOpen(true);
+          }}
+          className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 pointer-events-auto"
         >
           Evolution Hub
         </button>
@@ -49,7 +53,7 @@ function App() {
       <WeatherHUD />
 
       {isHubOpen && (
-        <EvolutionHub onClose={() => setIsHubOpen(false)} />
+        <EvolutionHub onClose={() => setHubOpen(false)} />
       )}
     </div>
   );

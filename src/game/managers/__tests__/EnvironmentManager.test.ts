@@ -29,6 +29,9 @@ describe('EnvironmentManager', () => {
   });
 
   it('should transition back to Day after NIGHT_DURATION and increase moisture chance', () => {
+    // Mock Math.random to not trigger rain (0.5 > 0.1)
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+
     // Transition to night first
     envManager.update(30000);
     expect(envManager.timeOfDay).toBe('night');
@@ -36,7 +39,10 @@ describe('EnvironmentManager', () => {
     // Transition to day
     envManager.update(30000);
     expect(envManager.timeOfDay).toBe('day');
-    expect(envManager.moistureProbability).toBeCloseTo(0.2);
+    // 0.1 (start) + 0.15 (increment) = 0.25
+    expect(envManager.moistureProbability).toBeCloseTo(0.25);
     expect(scene.events.emit).toHaveBeenCalledWith('cycle-changed', 'day');
+
+    randomSpy.mockRestore();
   });
 });

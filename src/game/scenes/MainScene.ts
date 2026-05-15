@@ -6,6 +6,9 @@ import { Aphid } from '../entities/Aphid';
 import { Pest } from '../entities/Pest';
 import { Seed } from '../entities/Seed';
 import { EnvironmentManager } from '../managers/EnvironmentManager';
+import { ResearchManager } from '../managers/ResearchManager';
+import { useCareerStore } from '../../store/useCareerStore';
+import { useGameStore } from '../../store/useGameStore';
 
 export class MainScene extends Phaser.Scene {
   public plantsGroup!: Phaser.Physics.Arcade.StaticGroup;
@@ -17,6 +20,13 @@ export class MainScene extends Phaser.Scene {
   private nightOverlay!: Phaser.GameObjects.Rectangle;
   private hoverStats!: Phaser.GameObjects.Container;
   private statsText!: Phaser.GameObjects.Text;
+
+  // Wave Management
+  private pestsToSpawn: number = 5;
+  private pestsSpawned: number = 0;
+  private pestsDestroyed: number = 0;
+  private isWaveActive: boolean = true;
+  private difficulty: number = 1.0;
 
   constructor() {
     super('MainScene');
@@ -71,6 +81,16 @@ export class MainScene extends Phaser.Scene {
     // Listen for squish event
     this.events.on('pest-squished', (x: number, y: number) => {
       this.splatterEmitter.explode(15, x, y);
+      this.pestsDestroyed++;
+      
+      // Update store stat
+      useCareerStore.getState().updateStats({
+        pestsPopped: useCareerStore.getState().stats.pestsPopped + 1
+      });
+
+      if (this.pestsDestroyed >= this.pestsToSpawn) {
+        this.harvest();
+      }
     });
 
     // Keys
@@ -178,6 +198,8 @@ export class MainScene extends Phaser.Scene {
   }
 
   spawnPest() {
+    if (this.pestsSpawned >= this.pestsToSpawn) return;
+
     let x, y;
     const side = Phaser.Math.Between(0, 3);
     switch(side) {
@@ -188,6 +210,52 @@ export class MainScene extends Phaser.Scene {
     }
     const aphid = new Aphid(this, x, y);
     this.pestsGroup.add(aphid);
+    this.pestsSpawned++;
+  }
+
+  harvest() {
+    if (!this.isWaveActive) return;
+    this.isWaveActive = false;
+
+    const survivingPlants = this.plantsGroup.getChildren() as Plant[];
+    const earnedRP = ResearchManager.calculateRP(survivingPlants, this.difficulty);
+
+    // Update Career Store
+    const careerStore = useCareerStore.getState();
+    careerStore.addRP(earnedRP);
+    careerStore.updateStats({
+      plantsHarvested: careerStore.stats.plantsHarvested + survivingPlants.length,
+      highestDifficultyCleared: Math.max(careerStore.stats.highestDifficultyCleared, this.difficulty)
+    });
+
+    // Show Summary
+    const summary = this.add.container(400, 300);
+    summary.setDepth(500);
+
+    const bg = this.add.rectangle(0, 0, 300, 200, 0x000000, 0.8);
+    const title = this.add.text(0, -70, 'WAVE COMPLETE', { fontSize: '24px', color: '#fff' }).setOrigin(0.5);
+    const rpText = this.add.text(0, -20, `RP Earned: ${earnedRP}`, { fontSize: '18px', color: '#00ff00' }).setOrigin(0.5);
+    const plantsText = this.add.text(0, 10, `Plants Harvested: ${survivingPlants.length}`, { fontSize: '16px', color: '#fff' }).setOrigin(0.5);
+    
+    const btn = this.add.rectangle(0, 60, 150, 40, 0x4f46e5).setInteractive();
+    const btnText = this.add.text(0, 60, 'Open Evolution Hub', { fontSize: '14px', color: '#fff' }).setOrigin(0.5);
+
+    summary.add([bg, title, rpText, plantsText, btn, btnText]);
+
+    btn.on('pointerdown', () => {
+      useGameStore.getState().setHubOpen(true);
+      // Reset for next wave or just stay in hub
+      this.resetWave();
+      summary.destroy();
+    });
+  }
+
+  resetWave() {
+    this.pestsSpawned = 0;
+    this.pestsDestroyed = 0;
+    this.isWaveActive = true;
+    this.pestsToSpawn += 5; // Increase difficulty
+    // Optionally clear plants or keep them
   }
 
   update(time: number, delta: number) {
@@ -209,7 +277,10 @@ export class MainScene extends Phaser.Scene {
       const hp = hovered as Plant;
       this.hoverStats.setVisible(true);
       this.hoverStats.setPosition(pointer.x + 10, pointer.y + 10);
+      const typeDisplay = hp.plantType.charAt(0).toUpperCase() + hp.plantType.slice(1);
       this.statsText.setText(
+        `${hp.getDisplayName()}\n` +
+        `Type: ${typeDisplay}\n` +
         `HP: ${Math.floor(hp.health)}\n` +
         `Level: ${hp.level}\n` +
         `Water: ${Math.floor(hp.hydration)}%\n` +
@@ -220,3 +291,4 @@ export class MainScene extends Phaser.Scene {
     }
   }
 }
+

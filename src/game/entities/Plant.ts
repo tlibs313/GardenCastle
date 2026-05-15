@@ -1,17 +1,18 @@
 import Phaser from 'phaser';
 import { Pest } from './Pest';
 import { MainScene } from '../scenes/MainScene';
+import { PLANT_CONSTANTS } from '../constants';
 
 export abstract class Plant extends Phaser.Physics.Arcade.Sprite {
-  public health: number = 100;
-  public maxHealth: number = 100;
-  public level: number = 1;
+  public health: number = PLANT_CONSTANTS.MAX_HEALTH;
+  public maxHealth: number = PLANT_CONSTANTS.MAX_HEALTH;
+  public level: number = PLANT_CONSTANTS.BASE_LEVEL;
   public plantType: 'objective' | 'defensive' | 'offensive';
   public attachedPests: Pest[] = [];
-  public baseGrowthRate: number = 0.01;
+  public baseGrowthRate: number = PLANT_CONSTANTS.BASE_GROWTH_RATE;
 
-  public hydration: number = 80;
-  public lightLevel: number = 50;
+  public hydration: number = PLANT_CONSTANTS.INITIAL_HYDRATION;
+  public lightLevel: number = PLANT_CONSTANTS.INITIAL_LIGHT_LEVEL;
   public isWilting: boolean = false;
   public isGlowing: boolean = false;
 
@@ -23,29 +24,32 @@ export abstract class Plant extends Phaser.Physics.Arcade.Sprite {
   }
 
   public abstract getSpeciesId(): string;
+  public abstract getDisplayName(): string;
   public abstract getBaseRP(): number;
   public abstract getDensityMultiplier(count: number): number;
 
   public update(delta: number) {
     // Decrease hydration slowly over time
-    this.hydration -= 0.001 * delta;
+    this.hydration -= PLANT_CONSTANTS.HYDRATION_DECREASE_RATE * delta;
     if (this.hydration < 0) this.hydration = 0;
 
     // Calculate lightLevel based on environment manager
     const mainScene = this.scene as MainScene;
     if (mainScene.environmentManager) {
-      this.lightLevel = mainScene.environmentManager.timeOfDay === 'day' ? 100 : 20;
+      this.lightLevel = mainScene.environmentManager.timeOfDay === 'day' 
+        ? PLANT_CONSTANTS.LIGHT_LEVELS.DAY 
+        : PLANT_CONSTANTS.LIGHT_LEVELS.NIGHT;
     }
 
     // Update wilting and glowing flags
-    this.isWilting = this.hydration < 30 || this.lightLevel < 30;
-    this.isGlowing = this.hydration > 80 && this.lightLevel > 80;
+    this.isWilting = this.hydration < PLANT_CONSTANTS.THRESHOLDS.WILTING || this.lightLevel < PLANT_CONSTANTS.THRESHOLDS.WILTING;
+    this.isGlowing = this.hydration > PLANT_CONSTANTS.THRESHOLDS.GLOWING && this.lightLevel > PLANT_CONSTANTS.THRESHOLDS.GLOWING;
 
     // Apply visual feedback
     if (this.isWilting) {
-      this.setTint(0x884400);
+      this.setTint(PLANT_CONSTANTS.TINTS.WILTING);
     } else if (this.isGlowing) {
-      this.setTint(0xffff00);
+      this.setTint(PLANT_CONSTANTS.TINTS.GLOWING);
     } else {
       this.clearTint();
     }
@@ -57,7 +61,8 @@ export abstract class Plant extends Phaser.Physics.Arcade.Sprite {
       pest.isAttached = true;
       pest.setVelocity(0, 0);
       // Position pest on plant
-      pest.setPosition(this.x + Phaser.Math.Between(-10, 10), this.y + Phaser.Math.Between(-10, 10));
+      const offset = PLANT_CONSTANTS.PEST_OFFSET_RANGE;
+      pest.setPosition(this.x + Phaser.Math.Between(-offset, offset), this.y + Phaser.Math.Between(-offset, offset));
     }
   }
 
