@@ -6,6 +6,7 @@ export abstract class Plant extends Phaser.Physics.Arcade.Sprite {
   public level: number = 1;
   public plantType: 'objective' | 'defensive' | 'offensive';
   public attachedPests: Pest[] = [];
+  public baseGrowthRate: number = 0.01;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string, type: 'objective' | 'defensive' | 'offensive') {
     super(scene, x, y, texture);

@@ -13,7 +13,7 @@ export class MainScene extends Phaser.Scene {
   public seedsGroup!: Phaser.Physics.Arcade.Group;
   private shiftKey!: Phaser.Input.Keyboard.Key;
   private splatterEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
-  private environmentManager!: EnvironmentManager;
+  public environmentManager!: EnvironmentManager;
   private nightOverlay!: Phaser.GameObjects.Rectangle;
 
   constructor() {
@@ -106,8 +106,11 @@ export class MainScene extends Phaser.Scene {
 
     // Environment
     this.environmentManager = new EnvironmentManager(this);
+    // For testing, let's set soil to sand
+    this.environmentManager.soilType = 'sand';
+    
     this.nightOverlay = this.add.rectangle(400, 300, 800, 600, 0x000033, 0);
-    this.nightOverlay.setDepth(100); // Above most things
+    this.nightOverlay.setDepth(100);
 
     this.events.on('cycle-changed', (cycle: 'day' | 'night') => {
       if (cycle === 'night') {
@@ -141,6 +144,13 @@ export class MainScene extends Phaser.Scene {
       if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
         const snappedX = gridX * 40 + 200 + 20;
         const snappedY = gridY * 40 + 100 + 20;
+
+        // Slot locking check: Ash required for high-tier
+        // For now, let's say Shift+Click on NON-Ash soil fails if it's an 'offensive' plant
+        if (this.shiftKey?.isDown && this.environmentManager.soilType !== 'ash' && Math.random() > 0.8) {
+          console.log("Cannot plant this here! Need Ash soil.");
+          return;
+        }
 
         let plant;
         if (this.shiftKey?.isDown) {

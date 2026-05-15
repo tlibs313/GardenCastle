@@ -16,16 +16,19 @@ export class ObjectivePlant extends Plant {
     if (this.attachedPests.length > 0) {
       // Deal small damage over time
       this.takeDamage(0.01 * delta);
-      return; 
+      return;
     }
 
     if (this.level < this.targetLevel) {
-      this.growthProgress += delta * 0.01;
+      // Get soil multiplier from environmentManager
+      const envManager = (this.scene as any).environmentManager;
+      const multiplier = envManager ? envManager.getSoilProperties().growthMultiplier[this.plantType] || 1.0 : 1.0;
+
+      this.growthProgress += delta * this.baseGrowthRate * multiplier;
       if (this.growthProgress >= 100) {
         this.level++;
         this.growthProgress = 0;
         this.levelText.setText(`Lvl: ${this.level}`);
       }
     }
-  }
-}
+  }}
