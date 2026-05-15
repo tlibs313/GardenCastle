@@ -15,6 +15,8 @@ export class MainScene extends Phaser.Scene {
   private splatterEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
   public environmentManager!: EnvironmentManager;
   private nightOverlay!: Phaser.GameObjects.Rectangle;
+  private hoverStats!: Phaser.GameObjects.Container;
+  private statsText!: Phaser.GameObjects.Text;
 
   constructor() {
     super('MainScene');
@@ -106,7 +108,6 @@ export class MainScene extends Phaser.Scene {
 
     // Environment
     this.environmentManager = new EnvironmentManager(this);
-    // For testing, let's set soil to sand
     this.environmentManager.soilType = 'sand';
     
     this.nightOverlay = this.add.rectangle(400, 300, 800, 600, 0x000033, 0);
@@ -128,6 +129,12 @@ export class MainScene extends Phaser.Scene {
       }
     });
 
+    // Hover Stats
+    this.statsText = this.add.text(0, 0, '', { fontSize: '12px', color: '#fff', backgroundColor: '#000', padding: { x: 5, y: 5 } });
+    this.hoverStats = this.add.container(0, 0, [this.statsText]);
+    this.hoverStats.setDepth(200);
+    this.hoverStats.setVisible(false);
+
     // Spawn timer
     this.time.addEvent({
       delay: 3000,
@@ -145,8 +152,6 @@ export class MainScene extends Phaser.Scene {
         const snappedX = gridX * 40 + 200 + 20;
         const snappedY = gridY * 40 + 100 + 20;
 
-        // Slot locking check: Ash required for high-tier
-        // For now, let's say Shift+Click on NON-Ash soil fails if it's an 'offensive' plant
         if (this.shiftKey?.isDown && this.environmentManager.soilType !== 'ash' && Math.random() > 0.8) {
           console.log("Cannot plant this here! Need Ash soil.");
           return;
@@ -178,8 +183,31 @@ export class MainScene extends Phaser.Scene {
 
   update(time: number, delta: number) {
     this.environmentManager.update(delta);
-    this.plantsGroup.getChildren().forEach(plant => {
-      (plant as Plant).update(delta);
+    
+    let hovered: Plant | null = null;
+    const pointer = this.input.activePointer;
+
+    this.plantsGroup.getChildren().forEach(gameObject => {
+      const p = gameObject as Plant;
+      p.update(delta);
+      
+      if (Phaser.Geom.Rectangle.Contains(p.getBounds(), pointer.x, pointer.y)) {
+        hovered = p;
+      }
     });
+
+    if (hovered) {
+      const hp = hovered as Plant;
+      this.hoverStats.setVisible(true);
+      this.hoverStats.setPosition(pointer.x + 10, pointer.y + 10);
+      this.statsText.setText(
+        `HP: ${Math.floor(hp.health)}\n` +
+        `Level: ${hp.level}\n` +
+        `Water: ${Math.floor(hp.hydration)}%\n` +
+        `Light: ${Math.floor(hp.lightLevel)}%`
+      );
+    } else {
+      this.hoverStats.setVisible(false);
+    }
   }
 }

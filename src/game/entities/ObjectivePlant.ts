@@ -12,6 +12,8 @@ export class ObjectivePlant extends Plant {
   }
 
   update(delta: number) {
+    super.update(delta);
+    
     // Corruption logic: Stop growth if pests are attached
     if (this.attachedPests.length > 0) {
       // Deal small damage over time
