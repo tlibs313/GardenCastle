@@ -82,3 +82,21 @@ export const PEST_CONSTANTS = {
     LOOT_RP: 50
   }
 };
+
+export const STRUCTURE_CONSTANTS = {
+  TYPES: {
+    WALL: 'stone_wall',
+    SPRINKLER: 'auto_sprinkler',
+    ZAPPER: 'copper_zapper'
+  },
+  ANCHORS: {
+    stone_wall: ['rocks'],
+    auto_sprinkler: ['dirt', 'sand'],
+    copper_zapper: ['ash']
+  },
+  STATS: {
+    stone_wall: { durability: 200, cost: 100 },
+    auto_sprinkler: { durability: 50, cost: 250, interval: 10000 },
+    copper_zapper: { durability: 100, cost: 500, range: 80 }
+  }
+};
