@@ -4,6 +4,7 @@ interface GameState {
   timeOfDay: 'day' | 'night';
   forecast: number[];
   isHubOpen: boolean;
+  isBuildMode: boolean;
   
   // Dashboard Info
   waveNumber: number;
@@ -16,6 +17,7 @@ interface GameState {
   setTimeOfDay: (time: 'day' | 'night') => void;
   setForecast: (forecast: number[]) => void;
   setHubOpen: (open: boolean) => void;
+  setBuildMode: (active: boolean) => void;
   
   // Dashboard Actions
   setWaveInfo: (wave: number, total: number, incoming: Record<string, number>) => void;
@@ -27,6 +29,7 @@ export const useGameStore = create<GameState>((set) => ({
   timeOfDay: 'day',
   forecast: [10, 20, 30],
   isHubOpen: false,
+  isBuildMode: false,
   
   waveNumber: 1,
   pestsKilled: 0,
@@ -38,6 +41,7 @@ export const useGameStore = create<GameState>((set) => ({
   setTimeOfDay: (time) => set({ timeOfDay: time }),
   setForecast: (forecast) => set({ forecast }),
   setHubOpen: (open) => set({ isHubOpen: open }),
+  setBuildMode: (active) => set({ isBuildMode: active }),
 
   setWaveInfo: (wave, total, incoming) => set({ 
     waveNumber: wave, 

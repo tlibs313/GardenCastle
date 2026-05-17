@@ -22,6 +22,7 @@ export class MainScene extends Phaser.Scene {
   private nightOverlay!: Phaser.GameObjects.Rectangle;
   private hoverStats!: Phaser.GameObjects.Container;
   private statsText!: Phaser.GameObjects.Text;
+  private buildModeIndicator!: Phaser.GameObjects.Text;
 
   // Wave Management
   private waveNumber: number = 1;
@@ -144,6 +145,14 @@ export class MainScene extends Phaser.Scene {
     // Keys
     if (this.input.keyboard) {
       this.shiftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+
+      const bKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B);
+      bKey.on('down', () => {
+        const currentMode = useGameStore.getState().isBuildMode;
+        const newMode = !currentMode;
+        useGameStore.getState().setBuildMode(newMode);
+        this.buildModeIndicator.setVisible(newMode);
+      });
     }
 
     // Initialize groups
@@ -211,6 +220,15 @@ export class MainScene extends Phaser.Scene {
     this.hoverStats = this.add.container(0, 0, [this.statsText]);
     this.hoverStats.setDepth(200);
     this.hoverStats.setVisible(false);
+
+    // Build Mode Indicator
+    this.buildModeIndicator = this.add.text(400, 20, 'BUILD MODE ACTIVE', {
+      fontSize: '24px',
+      color: '#ffff00',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setOrigin(0.5).setVisible(false).setDepth(200);
 
     // Initial wave setup
     this.startNewWave();
@@ -380,8 +398,21 @@ export class MainScene extends Phaser.Scene {
       const { plantCount, plantLimit } = useGameStore.getState();
       
       if (plantCount >= plantLimit) {
-        console.log("Plant limit reached!");
-        // Add a visual shake or feedback here later
+        const limitText = this.add.text(pointer.x, pointer.y - 20, 'GARDEN FULL!', { 
+          fontSize: '20px', 
+          color: '#ff0000', 
+          fontStyle: 'bold',
+          stroke: '#000000',
+          strokeThickness: 4
+        }).setOrigin(0.5);
+        
+        this.tweens.add({
+          targets: limitText,
+          y: limitText.y - 50,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => limitText.destroy()
+        });
         return;
       }
 
