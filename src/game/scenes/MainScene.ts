@@ -145,63 +145,6 @@ export class MainScene extends Phaser.Scene {
       console.log(`Boss defeated! Awarded ${lootRP} RP.`);
     });
 
-    // Collision: Pest vs Structure (Blocking and Damage)
-    this.physics.add.collider(this.pestsGroup, this.structuresGroup, (pest, structure) => {
-      const s = structure as any;
-      // Structures take a small amount of "friction" damage when pests touch them
-      s.takeDamage(0.1); 
-    });
-
-    // Keys
-    if (this.input.keyboard) {
-      this.shiftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
-
-      const bKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B);
-      bKey.on('down', () => {
-        const currentMode = useGameStore.getState().isBuildMode;
-        const newMode = !currentMode;
-        useGameStore.getState().setBuildMode(newMode);
-        this.buildModeIndicator.setVisible(newMode);
-        if (newMode) {
-          console.log('Build Mode Active. Select structure with 1, 2, 3.');
-        }
-      });
-
-      const key1 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
-      const key2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
-      const key3 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.THREE);
-
-      key1.on('down', () => {
-        if (useGameStore.getState().isBuildMode) {
-          useGameStore.getState().setSelectedStructureType(STRUCTURE_CONSTANTS.TYPES.WALL);
-          console.log('Selected: Stone Wall');
-        }
-      });
-      key2.on('down', () => {
-        if (useGameStore.getState().isBuildMode) {
-          useGameStore.getState().setSelectedStructureType(STRUCTURE_CONSTANTS.TYPES.SPRINKLER);
-          console.log('Selected: Auto Sprinkler');
-        }
-      });
-      key3.on('down', () => {
-        if (useGameStore.getState().isBuildMode) {
-          useGameStore.getState().setSelectedStructureType(STRUCTURE_CONSTANTS.TYPES.ZAPPER);
-          console.log('Selected: Copper Zapper');
-        }
-      });
-
-      // Soil toggle for testing
-      const sKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-      const soilTypes = ['dirt', 'sand', 'rocks', 'ash'];
-      let soilIndex = 2; // Start with rocks
-      sKey.on('down', () => {
-        soilIndex = (soilIndex + 1) % soilTypes.length;
-        const newSoil = soilTypes[soilIndex];
-        this.environmentManager.soilType = newSoil as any;
-        console.log(`Soil changed to: ${newSoil}`);
-      });
-    }
-
     // Initialize groups
     this.plantsGroup = this.physics.add.staticGroup();
     this.structuresGroup = this.physics.add.staticGroup();
@@ -212,6 +155,13 @@ export class MainScene extends Phaser.Scene {
     this.seedsGroup = this.physics.add.group({
       classType: Seed,
       runChildUpdate: true
+    });
+
+    // Collision: Pest vs Structure (Blocking and Damage)
+    this.physics.add.collider(this.pestsGroup, this.structuresGroup, (pest, structure) => {
+      const s = structure as any;
+      // Structures take a small amount of "friction" damage when pests touch them
+      s.takeDamage(0.1); 
     });
 
     // Collision: Pest vs Plant (Attachment)
@@ -269,6 +219,56 @@ export class MainScene extends Phaser.Scene {
     this.hoverStats.setDepth(200);
     this.hoverStats.setVisible(false);
 
+    // Keys
+    if (this.input.keyboard) {
+      this.shiftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+
+      const bKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B);
+      bKey.on('down', () => {
+        const currentMode = useGameStore.getState().isBuildMode;
+        const newMode = !currentMode;
+        useGameStore.getState().setBuildMode(newMode);
+        this.buildModeIndicator.setVisible(newMode);
+        if (newMode) {
+          console.log('Build Mode Active. Select structure with 1, 2, 3.');
+        }
+      });
+
+      const key1 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
+      const key2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
+      const key3 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.THREE);
+
+      key1.on('down', () => {
+        if (useGameStore.getState().isBuildMode) {
+          useGameStore.getState().setSelectedStructureType(STRUCTURE_CONSTANTS.TYPES.WALL);
+          console.log('Selected: Stone Wall');
+        }
+      });
+      key2.on('down', () => {
+        if (useGameStore.getState().isBuildMode) {
+          useGameStore.getState().setSelectedStructureType(STRUCTURE_CONSTANTS.TYPES.SPRINKLER);
+          console.log('Selected: Auto Sprinkler');
+        }
+      });
+      key3.on('down', () => {
+        if (useGameStore.getState().isBuildMode) {
+          useGameStore.getState().setSelectedStructureType(STRUCTURE_CONSTANTS.TYPES.ZAPPER);
+          console.log('Selected: Copper Zapper');
+        }
+      });
+
+      // Soil toggle for testing
+      const sKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+      const soilTypes = ['dirt', 'sand', 'rocks', 'ash'];
+      let soilIndex = 2; // Start with rocks
+      sKey.on('down', () => {
+        soilIndex = (soilIndex + 1) % soilTypes.length;
+        const newSoil = soilTypes[soilIndex];
+        this.environmentManager.soilType = newSoil as any;
+        console.log(`Soil changed to: ${newSoil}`);
+      });
+    }
+
     // Build Mode Indicator
     this.buildModeIndicator = this.add.text(400, 20, 'BUILD MODE ACTIVE', {
       fontSize: '24px',
@@ -291,6 +291,10 @@ export class MainScene extends Phaser.Scene {
 
     // Click to plant mechanic
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      // Resume audio context on first interaction to avoid browser warnings
+      if (this.sound.context.state === 'suspended') {
+        this.sound.context.resume();
+      }
       this.handlePlanting(pointer);
     });
   }
@@ -525,8 +529,10 @@ export class MainScene extends Phaser.Scene {
         return;
       }
 
-      if (this.shiftKey?.isDown && this.environmentManager.soilType !== 'ash' && Math.random() > 0.8) {
-        return;
+      if (this.shiftKey?.isDown && this.environmentManager.soilType !== 'ash') {
+        // Cacti (Offensive plants) are intended to be harder to grow, 
+        // but let's make them 100% reliable for now to ensure the player can actually play.
+        // We can add a cost or specific soil requirement later.
       }
 
       let plant;
