@@ -8,12 +8,15 @@ import { Seed } from '../entities/Seed';
 import { EnvironmentManager } from '../managers/EnvironmentManager';
 import { ResearchManager } from '../managers/ResearchManager';
 import { PestFactory } from '../managers/PestFactory';
-import { PEST_CONSTANTS } from '../constants';
+import { StructureFactory } from '../managers/StructureFactory';
+import { Structure } from '../entities/Structure';
+import { PEST_CONSTANTS, STRUCTURE_CONSTANTS } from '../constants';
 import { useCareerStore } from '../../store/useCareerStore';
 import { useGameStore } from '../../store/useGameStore';
 
 export class MainScene extends Phaser.Scene {
   public plantsGroup!: Phaser.Physics.Arcade.StaticGroup;
+  public structuresGroup!: Phaser.Physics.Arcade.StaticGroup;
   public pestsGroup!: Phaser.Physics.Arcade.Group;
   public seedsGroup!: Phaser.Physics.Arcade.Group;
   private shiftKey!: Phaser.Input.Keyboard.Key;
@@ -142,6 +145,13 @@ export class MainScene extends Phaser.Scene {
       console.log(`Boss defeated! Awarded ${lootRP} RP.`);
     });
 
+    // Collision: Pest vs Structure (Blocking and Damage)
+    this.physics.add.collider(this.pestsGroup, this.structuresGroup, (pest, structure) => {
+      const s = structure as any;
+      // Structures take a small amount of "friction" damage when pests touch them
+      s.takeDamage(0.1); 
+    });
+
     // Keys
     if (this.input.keyboard) {
       this.shiftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
@@ -152,11 +162,49 @@ export class MainScene extends Phaser.Scene {
         const newMode = !currentMode;
         useGameStore.getState().setBuildMode(newMode);
         this.buildModeIndicator.setVisible(newMode);
+        if (newMode) {
+          console.log('Build Mode Active. Select structure with 1, 2, 3.');
+        }
+      });
+
+      const key1 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
+      const key2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
+      const key3 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.THREE);
+
+      key1.on('down', () => {
+        if (useGameStore.getState().isBuildMode) {
+          useGameStore.getState().setSelectedStructureType(STRUCTURE_CONSTANTS.TYPES.WALL);
+          console.log('Selected: Stone Wall');
+        }
+      });
+      key2.on('down', () => {
+        if (useGameStore.getState().isBuildMode) {
+          useGameStore.getState().setSelectedStructureType(STRUCTURE_CONSTANTS.TYPES.SPRINKLER);
+          console.log('Selected: Auto Sprinkler');
+        }
+      });
+      key3.on('down', () => {
+        if (useGameStore.getState().isBuildMode) {
+          useGameStore.getState().setSelectedStructureType(STRUCTURE_CONSTANTS.TYPES.ZAPPER);
+          console.log('Selected: Copper Zapper');
+        }
+      });
+
+      // Soil toggle for testing
+      const sKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+      const soilTypes = ['dirt', 'sand', 'rocks', 'ash'];
+      let soilIndex = 2; // Start with rocks
+      sKey.on('down', () => {
+        soilIndex = (soilIndex + 1) % soilTypes.length;
+        const newSoil = soilTypes[soilIndex];
+        this.environmentManager.soilType = newSoil as any;
+        console.log(`Soil changed to: ${newSoil}`);
       });
     }
 
     // Initialize groups
     this.plantsGroup = this.physics.add.staticGroup();
+    this.structuresGroup = this.physics.add.staticGroup();
     this.pestsGroup = this.physics.add.group({
       classType: Aphid,
       runChildUpdate: true
@@ -358,21 +406,27 @@ export class MainScene extends Phaser.Scene {
   update(time: number, delta: number) {
     this.environmentManager.update(delta);
     
-    let hovered: Plant | null = null;
+    let hoveredPlant: Plant | null = null;
+    let hoveredStructure: Structure | null = null;
     const pointer = this.input.activePointer;
 
     const plants = this.plantsGroup.getChildren() as Plant[];
-    useGameStore.getState().updatePlantCount(plants.length);
-
     plants.forEach(p => {
       p.update(delta);
       if (Phaser.Geom.Rectangle.Contains(p.getBounds(), pointer.x, pointer.y)) {
-        hovered = p;
+        hoveredPlant = p;
       }
     });
 
-    if (hovered) {
-      const hp = hovered;
+    const structures = this.structuresGroup.getChildren() as Structure[];
+    structures.forEach(s => {
+      if (Phaser.Geom.Rectangle.Contains(s.getBounds(), pointer.x, pointer.y)) {
+        hoveredStructure = s;
+      }
+    });
+
+    if (hoveredPlant) {
+      const hp = hoveredPlant;
       this.hoverStats.setVisible(true);
       this.hoverStats.setPosition(pointer.x + 10, pointer.y + 10);
       const typeDisplay = hp.plantType.charAt(0).toUpperCase() + hp.plantType.slice(1);
@@ -383,6 +437,14 @@ export class MainScene extends Phaser.Scene {
         `Level: ${hp.level}\n` +
         `Water: ${Math.floor(hp.hydration)}%\n` +
         `Light: ${Math.floor(hp.lightLevel)}%`
+      );
+    } else if (hoveredStructure) {
+      const hs = hoveredStructure;
+      this.hoverStats.setVisible(true);
+      this.hoverStats.setPosition(pointer.x + 10, pointer.y + 10);
+      this.statsText.setText(
+        `${hs.getDisplayName()}\n` +
+        `Durability: ${Math.floor(hs.durability)}/${hs.maxDurability}`
       );
     } else {
       this.hoverStats.setVisible(false);
@@ -395,6 +457,29 @@ export class MainScene extends Phaser.Scene {
     const gridY = Math.floor((pointer.y - 100) / 40);
 
     if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
+      const snappedX = gridX * 40 + 200 + 20;
+      const snappedY = gridY * 40 + 100 + 20;
+
+      // Check if space is occupied
+      const occupiedByPlant = this.plantsGroup.getChildren().some((p: any) => p.x === snappedX && p.y === snappedY);
+      const occupiedByStructure = this.structuresGroup.getChildren().some((s: any) => s.x === snappedX && s.y === snappedY);
+      if (occupiedByPlant || occupiedByStructure) return;
+
+      if (useGameStore.getState().isBuildMode) {
+        // Build mode: Place structures
+        const currentSoil = this.environmentManager.soilType;
+        const structureType = useGameStore.getState().selectedStructureType;
+        const anchors = (STRUCTURE_CONSTANTS.ANCHORS as any)[structureType];
+
+        if (anchors && anchors.includes(currentSoil)) {
+          const structure = StructureFactory.create(structureType, this, snappedX, snappedY);
+          this.structuresGroup.add(structure);
+        } else {
+          console.log(`Cannot place ${structureType} on ${currentSoil}. Needs: ${anchors?.join(', ')}`);
+        }
+        return;
+      }
+
       const { plantCount, plantLimit } = useGameStore.getState();
       
       if (plantCount >= plantLimit) {
@@ -415,13 +500,6 @@ export class MainScene extends Phaser.Scene {
         });
         return;
       }
-
-      const snappedX = gridX * 40 + 200 + 20;
-      const snappedY = gridY * 40 + 100 + 20;
-
-      // Check if space is occupied
-      const occupied = this.plantsGroup.getChildren().some((p: any) => p.x === snappedX && p.y === snappedY);
-      if (occupied) return;
 
       if (this.shiftKey?.isDown && this.environmentManager.soilType !== 'ash' && Math.random() > 0.8) {
         return;

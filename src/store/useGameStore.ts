@@ -5,6 +5,7 @@ interface GameState {
   forecast: number[];
   isHubOpen: boolean;
   isBuildMode: boolean;
+  selectedStructureType: string;
   
   // Dashboard Info
   waveNumber: number;
@@ -18,6 +19,7 @@ interface GameState {
   setForecast: (forecast: number[]) => void;
   setHubOpen: (open: boolean) => void;
   setBuildMode: (active: boolean) => void;
+  setSelectedStructureType: (type: string) => void;
   
   // Dashboard Actions
   setWaveInfo: (wave: number, total: number, incoming: Record<string, number>) => void;
@@ -30,6 +32,7 @@ export const useGameStore = create<GameState>((set) => ({
   forecast: [10, 20, 30],
   isHubOpen: false,
   isBuildMode: false,
+  selectedStructureType: 'stone_wall',
   
   waveNumber: 1,
   pestsKilled: 0,
@@ -42,6 +45,7 @@ export const useGameStore = create<GameState>((set) => ({
   setForecast: (forecast) => set({ forecast }),
   setHubOpen: (open) => set({ isHubOpen: open }),
   setBuildMode: (active) => set({ isBuildMode: active }),
+  setSelectedStructureType: (type) => set({ selectedStructureType: type }),
 
   setWaveInfo: (wave, total, incoming) => set({ 
     waveNumber: wave, 

@@ -96,7 +96,7 @@ export const STRUCTURE_CONSTANTS = {
   },
   STATS: {
     stone_wall: { durability: 200, cost: 100 },
-    auto_sprinkler: { durability: 50, cost: 250, interval: 10000 },
-    copper_zapper: { durability: 100, cost: 500, range: 80 }
+    auto_sprinkler: { durability: 50, cost: 250, interval: 10000, radius: 80, healAmount: 20 },
+    copper_zapper: { durability: 100, cost: 500, range: 80, damage: 10 }
   }
 };
