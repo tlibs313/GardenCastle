@@ -47,10 +47,14 @@ export class OffensivePlant extends Plant {
     const pests = mainScene.pestsGroup?.getChildren() as Pest[];
     if (!pests || pests.length === 0) return;
 
+    // Only target targetable pests
+    const targetablePests = pests.filter(p => p.isTargetable);
+    if (targetablePests.length === 0) return;
+
     let nearestPest: Pest | null = null;
     let minDistance = this.range;
 
-    pests.forEach(pest => {
+    targetablePests.forEach(pest => {
       const distance = Phaser.Math.Distance.Between(this.x, this.y, pest.x, pest.y);
       if (distance < minDistance) {
         minDistance = distance;

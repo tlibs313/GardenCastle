@@ -7,6 +7,8 @@ import { Pest } from '../entities/Pest';
 import { Seed } from '../entities/Seed';
 import { EnvironmentManager } from '../managers/EnvironmentManager';
 import { ResearchManager } from '../managers/ResearchManager';
+import { PestFactory } from '../managers/PestFactory';
+import { PEST_CONSTANTS } from '../constants';
 import { useCareerStore } from '../../store/useCareerStore';
 import { useGameStore } from '../../store/useGameStore';
 
@@ -22,7 +24,9 @@ export class MainScene extends Phaser.Scene {
   private statsText!: Phaser.GameObjects.Text;
 
   // Wave Management
-  private pestsToSpawn: number = 5;
+  private waveNumber: number = 1;
+  private spawnQueue: string[] = [];
+  private pestsToSpawn: number = 0;
   private pestsSpawned: number = 0;
   private pestsDestroyed: number = 0;
   private isWaveActive: boolean = true;
@@ -39,6 +43,42 @@ export class MainScene extends Phaser.Scene {
     graphics.fillStyle(0x00ff00, 1);
     graphics.fillCircle(10, 10, 10);
     graphics.generateTexture('aphid-placeholder', 20, 20);
+    graphics.clear();
+
+    // Beetle placeholder (Square)
+    graphics.fillStyle(0x888888, 1);
+    graphics.fillRect(0, 0, 24, 24);
+    graphics.generateTexture('beetle-placeholder', 24, 24);
+    graphics.clear();
+
+    // Slug placeholder (Rectangle)
+    graphics.fillStyle(0xcc33ff, 1); // Brighter Purple
+    graphics.fillRect(0, 0, 30, 20);
+    graphics.generateTexture('slug-placeholder', 30, 20);
+    graphics.clear();
+
+    // Locust placeholder (Triangle)
+    graphics.fillStyle(0x00ff00, 1); // Pure Green
+    graphics.fillTriangle(10, 0, 0, 20, 20, 20);
+    graphics.generateTexture('locust-placeholder', 20, 20);
+    graphics.clear();
+
+    // Plant: Rose (Red Circle)
+    graphics.fillStyle(0xff0000, 1);
+    graphics.fillCircle(15, 15, 15);
+    graphics.generateTexture('rose', 30, 30);
+    graphics.clear();
+
+    // Plant: Cactus (Green Vertical Rect)
+    graphics.fillStyle(0x228b22, 1);
+    graphics.fillRect(5, 0, 20, 30);
+    graphics.generateTexture('cactus', 30, 30);
+    graphics.clear();
+
+    // Plant: Stone (Grey Round Rect)
+    graphics.fillStyle(0x708090, 1);
+    graphics.fillRoundedRect(0, 5, 30, 20, 8);
+    graphics.generateTexture('stone', 30, 30);
     graphics.clear();
 
     // Seed placeholder
@@ -83,14 +123,22 @@ export class MainScene extends Phaser.Scene {
       this.splatterEmitter.explode(15, x, y);
       this.pestsDestroyed++;
       
-      // Update store stat
+      // Update store stats
       useCareerStore.getState().updateStats({
         pestsPopped: useCareerStore.getState().stats.pestsPopped + 1
       });
+      useGameStore.getState().incrementKills();
 
       if (this.pestsDestroyed >= this.pestsToSpawn) {
         this.harvest();
       }
+    });
+
+    // Listen for boss defeated event
+    this.events.on('boss-defeated', (lootRP: number) => {
+      useCareerStore.getState().addRP(lootRP);
+      useGameStore.getState().incrementKills(); // Boss counts as a kill
+      console.log(`Boss defeated! Awarded ${lootRP} RP.`);
     });
 
     // Keys
@@ -121,7 +169,7 @@ export class MainScene extends Phaser.Scene {
     // Collision: Seed vs Pest
     this.physics.add.overlap(this.seedsGroup, this.pestsGroup, (seed, pest) => {
       const s = seed as Seed;
-      const p = pest as Aphid;
+      const p = pest as Pest;
       p.squish();
       s.destroy();
     });
@@ -164,6 +212,9 @@ export class MainScene extends Phaser.Scene {
     this.hoverStats.setDepth(200);
     this.hoverStats.setVisible(false);
 
+    // Initial wave setup
+    this.startNewWave();
+
     // Spawn timer
     this.time.addEvent({
       delay: 3000,
@@ -174,32 +225,14 @@ export class MainScene extends Phaser.Scene {
 
     // Click to plant mechanic
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      const gridX = Math.floor((pointer.x - 200) / 40);
-      const gridY = Math.floor((pointer.y - 100) / 40);
-
-      if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
-        const snappedX = gridX * 40 + 200 + 20;
-        const snappedY = gridY * 40 + 100 + 20;
-
-        if (this.shiftKey?.isDown && this.environmentManager.soilType !== 'ash' && Math.random() > 0.8) {
-          console.log("Cannot plant this here! Need Ash soil.");
-          return;
-        }
-
-        let plant;
-        if (this.shiftKey?.isDown) {
-          plant = new OffensivePlant(this, snappedX, snappedY);
-        } else {
-          plant = new ObjectivePlant(this, snappedX, snappedY);
-        }
-        this.plantsGroup.add(plant);
-      }
+      this.handlePlanting(pointer);
     });
   }
 
   spawnPest() {
-    if (this.pestsSpawned >= this.pestsToSpawn) return;
+    if (this.spawnQueue.length === 0) return;
 
+    const type = this.spawnQueue.shift()!;
     let x, y;
     const side = Phaser.Math.Between(0, 3);
     switch(side) {
@@ -208,9 +241,57 @@ export class MainScene extends Phaser.Scene {
       case 2: x = Phaser.Math.Between(0, 800); y = 620; break;
       default: x = -20; y = Phaser.Math.Between(0, 600); break;
     }
-    const aphid = new Aphid(this, x, y);
-    this.pestsGroup.add(aphid);
+    const pest = PestFactory.createPest(type, this, x, y);
+    this.pestsGroup.add(pest);
     this.pestsSpawned++;
+  }
+
+  startNewWave() {
+    this.pestsSpawned = 0;
+    this.pestsDestroyed = 0;
+    this.isWaveActive = true;
+    
+    this.spawnQueue = [];
+
+    if (this.waveNumber === 5) {
+      this.spawnQueue = [PEST_CONSTANTS.TYPES.BOSS_SQUIRREL];
+      this.pestsToSpawn = 1;
+    } else {
+      const budget = 10 + (this.waveNumber * 10);
+      let currentSpent = 0;
+
+      const availablePests = [PEST_CONSTANTS.TYPES.APHID];
+      if (this.waveNumber >= 3) availablePests.push(PEST_CONSTANTS.TYPES.SLUG);
+      if (this.waveNumber >= 6) {
+        availablePests.push(PEST_CONSTANTS.TYPES.BEETLE);
+        availablePests.push(PEST_CONSTANTS.TYPES.LOCUST);
+      }
+
+      while (currentSpent < budget) {
+        const type = Phaser.Utils.Array.GetRandom(availablePests);
+        const cost = PEST_CONSTANTS.BUDGETS[type as keyof typeof PEST_CONSTANTS.BUDGETS];
+        
+        if (currentSpent + cost <= budget) {
+          this.spawnQueue.push(type);
+          currentSpent += cost;
+        } else if (currentSpent + 1 <= budget) {
+          this.spawnQueue.push(PEST_CONSTANTS.TYPES.APHID);
+          currentSpent += 1;
+        } else {
+          break;
+        }
+      }
+      this.pestsToSpawn = this.spawnQueue.length;
+    }
+
+    // Summarize incoming pests for the store
+    const incomingSummary: Record<string, number> = {};
+    this.spawnQueue.forEach(type => {
+      incomingSummary[type] = (incomingSummary[type] || 0) + 1;
+    });
+
+    useGameStore.getState().setWaveInfo(this.waveNumber, this.pestsToSpawn, incomingSummary);
+    this.waveNumber++;
   }
 
   harvest() {
@@ -228,6 +309,9 @@ export class MainScene extends Phaser.Scene {
       highestDifficultyCleared: Math.max(careerStore.stats.highestDifficultyCleared, this.difficulty)
     });
 
+    // Sync plant count to store for dashboard
+    useGameStore.getState().updatePlantCount(survivingPlants.length);
+
     // Show Summary
     const summary = this.add.container(400, 300);
     summary.setDepth(500);
@@ -244,18 +328,13 @@ export class MainScene extends Phaser.Scene {
 
     btn.on('pointerdown', () => {
       useGameStore.getState().setHubOpen(true);
-      // Reset for next wave or just stay in hub
       this.resetWave();
       summary.destroy();
     });
   }
 
   resetWave() {
-    this.pestsSpawned = 0;
-    this.pestsDestroyed = 0;
-    this.isWaveActive = true;
-    this.pestsToSpawn += 5; // Increase difficulty
-    // Optionally clear plants or keep them
+    this.startNewWave();
   }
 
   update(time: number, delta: number) {
@@ -264,17 +343,18 @@ export class MainScene extends Phaser.Scene {
     let hovered: Plant | null = null;
     const pointer = this.input.activePointer;
 
-    this.plantsGroup.getChildren().forEach(gameObject => {
-      const p = gameObject as Plant;
+    const plants = this.plantsGroup.getChildren() as Plant[];
+    useGameStore.getState().updatePlantCount(plants.length);
+
+    plants.forEach(p => {
       p.update(delta);
-      
       if (Phaser.Geom.Rectangle.Contains(p.getBounds(), pointer.x, pointer.y)) {
         hovered = p;
       }
     });
 
     if (hovered) {
-      const hp = hovered as Plant;
+      const hp = hovered;
       this.hoverStats.setVisible(true);
       this.hoverStats.setPosition(pointer.x + 10, pointer.y + 10);
       const typeDisplay = hp.plantType.charAt(0).toUpperCase() + hp.plantType.slice(1);
@@ -288,6 +368,42 @@ export class MainScene extends Phaser.Scene {
       );
     } else {
       this.hoverStats.setVisible(false);
+    }
+  }
+
+  // Click to plant mechanic helper
+  private handlePlanting(pointer: Phaser.Input.Pointer) {
+    const gridX = Math.floor((pointer.x - 200) / 40);
+    const gridY = Math.floor((pointer.y - 100) / 40);
+
+    if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
+      const { plantCount, plantLimit } = useGameStore.getState();
+      
+      if (plantCount >= plantLimit) {
+        console.log("Plant limit reached!");
+        // Add a visual shake or feedback here later
+        return;
+      }
+
+      const snappedX = gridX * 40 + 200 + 20;
+      const snappedY = gridY * 40 + 100 + 20;
+
+      // Check if space is occupied
+      const occupied = this.plantsGroup.getChildren().some((p: any) => p.x === snappedX && p.y === snappedY);
+      if (occupied) return;
+
+      if (this.shiftKey?.isDown && this.environmentManager.soilType !== 'ash' && Math.random() > 0.8) {
+        return;
+      }
+
+      let plant;
+      if (this.shiftKey?.isDown) {
+        plant = new OffensivePlant(this, snappedX, snappedY);
+      } else {
+        plant = new ObjectivePlant(this, snappedX, snappedY);
+      }
+      this.plantsGroup.add(plant);
+      useGameStore.getState().updatePlantCount(this.plantsGroup.getLength());
     }
   }
 }

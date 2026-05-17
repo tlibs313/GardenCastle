@@ -15,13 +15,26 @@ vi.mock('phaser', () => {
       this.texture = texture;
     }
     destroy = vi.fn();
+    setInteractive = vi.fn().mockReturnThis();
+    on = vi.fn().mockReturnThis();
+    setVelocity = vi.fn().mockReturnThis();
   }
 
   return {
     default: {
-      Physics: { Arcade: { Sprite: MockSprite } }
+      Physics: { Arcade: { Sprite: MockSprite } },
+      Math: {
+        Angle: {
+          Between: vi.fn().mockReturnValue(0)
+        }
+      }
     },
-    Physics: { Arcade: { Sprite: MockSprite } }
+    Physics: { Arcade: { Sprite: MockSprite } },
+    Math: {
+      Angle: {
+        Between: vi.fn().mockReturnValue(0)
+      }
+    }
   };
 });
 
@@ -73,5 +86,55 @@ describe('Pest Base Class', () => {
     pest.takeDamage(10);
     expect(mockScene.events.emit).toHaveBeenCalledWith('pest-squished', 100, 100);
     expect(destroySpy).toHaveBeenCalled();
+  });
+
+  it('should remove itself from target plant when it dies', () => {
+    const mockPlant = {
+      removePest: vi.fn()
+    };
+    
+    const mockScene = {
+      add: { existing: vi.fn() },
+      physics: { add: { existing: vi.fn() } },
+      time: { now: 1000 },
+      events: { emit: vi.fn() }
+    } as any;
+    
+    const pest = new TestPest(mockScene, 100, 100);
+    // @ts-ignore - access protected property for test
+    pest.targetPlant = mockPlant;
+    
+    pest.takeDamage(10);
+    expect(mockPlant.removePest).toHaveBeenCalledWith(pest);
+  });
+
+  it('should be interactive and have pointerdown listener', () => {
+    const mockScene = {
+      add: { existing: vi.fn() },
+      physics: { add: { existing: vi.fn() } },
+      time: { now: 1000 }
+    } as any;
+    
+    // We expect the constructor to set interactive
+    const pest = new TestPest(mockScene, 100, 100);
+    // @ts-ignore
+    expect(pest.setInteractive).toHaveBeenCalled();
+    // @ts-ignore
+    expect(pest.on).toHaveBeenCalledWith('pointerdown', expect.any(Function));
+  });
+
+  it('should move toward target in update', () => {
+    const mockScene = {
+      add: { existing: vi.fn() },
+      physics: { add: { existing: vi.fn() } },
+      time: { now: 1000 }
+    } as any;
+    const pest = new TestPest(mockScene, 0, 0);
+    // @ts-ignore
+    pest.setVelocity = vi.fn();
+    
+    pest.update(0, 16);
+    // @ts-ignore
+    expect(pest.setVelocity).toHaveBeenCalled();
   });
 });

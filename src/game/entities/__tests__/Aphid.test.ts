@@ -23,6 +23,7 @@ vi.mock('phaser', () => {
     setOrigin() { return this; }
     setInteractive() { return this; }
     on() { return this; }
+    destroy = vi.fn();
   }
 
   return {

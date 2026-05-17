@@ -71,6 +71,10 @@ export const PEST_CONSTANTS = {
     HEALTH: 30,
     SPEED: 40
   },
+  LOCUST: {
+    HEALTH: 5,
+    SPEED: 80
+  },
   BOSS: {
     HEALTH: 500,
     STUN_DURATION: 500,

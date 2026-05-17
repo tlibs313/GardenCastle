@@ -59,6 +59,7 @@ export abstract class Plant extends Phaser.Physics.Arcade.Sprite {
     if (!this.attachedPests.includes(pest)) {
       this.attachedPests.push(pest);
       pest.isAttached = true;
+      pest.targetPlant = this;
       pest.setVelocity(0, 0);
       // Position pest on plant
       const offset = PLANT_CONSTANTS.PEST_OFFSET_RANGE;

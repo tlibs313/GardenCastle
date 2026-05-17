@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { config } from './game/config';
 import { WeatherHUD } from './components/WeatherHUD';
 import { EvolutionHub } from './components/EvolutionHub';
+import { Dashboard } from './components/Dashboard';
 import { useGameStore } from './store/useGameStore';
 
 function App() {
@@ -35,14 +36,25 @@ function App() {
 
   return (
     <div className="App" style={{ position: 'relative', height: '100vh', width: '100vw', backgroundColor: '#1a1a1a', overflow: 'hidden' }}>
-      <header style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '1rem', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', zIndex: 1001 }}>
-        <h1 style={{ margin: '0 1rem 0 0', color: 'white', fontSize: '1.5rem', fontWeight: '900', textTransform: 'uppercase', fontStyle: 'italic' }}>GardenCastle</h1>
+      <Dashboard />
+
+      <header style={{ position: 'absolute', top: '4rem', left: 0, right: 0, padding: '1rem', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', zIndex: 1001 }}>
         <button 
           onClick={() => {
             console.log("Opening Hub...");
             setHubOpen(true);
           }}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 pointer-events-auto"
+          style={{
+            backgroundColor: '#4f46e5',
+            color: 'white',
+            fontWeight: 'bold',
+            padding: '0.5rem 1.5rem',
+            borderRadius: '9999px',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            pointerEvents: 'auto'
+          }}
         >
           Evolution Hub
         </button>

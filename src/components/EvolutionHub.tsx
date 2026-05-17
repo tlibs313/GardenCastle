@@ -55,7 +55,7 @@ export const EvolutionHub: React.FC<EvolutionHubProps> = ({ onClose }) => {
           backgroundColor: '#1f2937'
         }}
       >
-        <h4 style={{ fontWeight: 'bold', fontSize: '1.125rem', margin: '0 0 0.5rem 0', color: 'white' }}>{node.title}</h4>
+        <h4 style={{ fontWeight: 'bold', fontSize: '1.125rem', margin: '0 0 0.5rem 0', color: 'white' }}>{node.name}</h4>
         <p style={{ fontSize: '0.875rem', color: '#d1d5db', marginBottom: '0.5rem' }}>{node.description}</p>
         <button
           disabled={unlocked || !available || !affordable}

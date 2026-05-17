@@ -9,6 +9,7 @@ class TestPlant extends Plant {
   }
 
   getSpeciesId() { return 'test-species'; }
+  getDisplayName() { return 'Test Plant'; }
   getBaseRP() { return 0; }
   getDensityMultiplier(count: number) { return 1.0; }
 }

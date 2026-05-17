@@ -22,6 +22,10 @@ vi.mock('../../entities/Plant', () => {
         return this.texture.key;
       }
 
+      getDisplayName() {
+        return this.texture.key;
+      }
+
       getBaseRP() {
         switch (this.plantType) {
           case 'objective': return 50;
@@ -53,6 +57,10 @@ class MockPlant extends Plant {
 
   // Implementation to satisfy abstract class requirements
   getSpeciesId(): string {
+    return (this as any).texture.key;
+  }
+
+  getDisplayName(): string {
     return (this as any).texture.key;
   }
 
