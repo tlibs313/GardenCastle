@@ -44,3 +44,37 @@ export const PLANT_CONSTANTS = {
   OFFENSIVE_SPREAD: 0.2,
   OFFENSIVE_SEED_SPEED: 200
 };
+
+export const PEST_CONSTANTS = {
+  TYPES: {
+    APHID: 'aphid',
+    BEETLE: 'beetle',
+    SLUG: 'slug',
+    LOCUST: 'locust',
+    BOSS_SQUIRREL: 'boss_squirrel'
+  },
+  BUDGETS: {
+    aphid: 1,
+    slug: 3,
+    beetle: 5,
+    locust: 8
+  },
+  BEETLE: {
+    DR: 0.1, // 10% damage taken
+    HEALTH: 50,
+    SPEED: 30
+  },
+  SLUG: {
+    REGEN_DELAY: 2000,
+    REGEN_RATE: 1, // HP per second
+    LIFE_STEAL_MULT: 2.0,
+    HEALTH: 30,
+    SPEED: 40
+  },
+  BOSS: {
+    HEALTH: 500,
+    STUN_DURATION: 500,
+    CLICK_DAMAGE: 10,
+    LOOT_RP: 50
+  }
+};
