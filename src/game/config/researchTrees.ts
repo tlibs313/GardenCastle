@@ -1,7 +1,7 @@
 /**
  * Valid research tree categories.
  */
-export type ResearchTreeType = 'water' | 'tool' | 'biology';
+export type ResearchTreeType = 'water' | 'tool' | 'biology' | 'hardware';
 
 /**
  * Defines the possible effects a research node can have on the game.
@@ -9,6 +9,7 @@ export type ResearchTreeType = 'water' | 'tool' | 'biology';
  */
 export type ResearchEffect =
   | { type: 'unlock_plant'; plantId: string }
+  | { type: 'unlock_structure'; structureId: string }
   | { type: 'modifier'; stat: string; value: number }
   | { type: 'custom'; payload: Record<string, any> };
 
@@ -74,6 +75,34 @@ export const RESEARCH_TREES: Record<ResearchTreeType, ResearchNode[]> = {
       cost: 50,
       tree: 'biology',
       effect: { type: 'unlock_plant', plantId: 'sunflower' }
+    },
+  ],
+  hardware: [
+    {
+      id: 'hw_01',
+      name: 'Basic Fortifications',
+      description: 'Unlocks Stone Walls for defense.',
+      cost: 100,
+      tree: 'hardware',
+      effect: { type: 'unlock_structure', structureId: 'stone_wall' }
+    },
+    {
+      id: 'hw_02',
+      name: 'Irrigation Systems',
+      description: 'Unlocks Auto-Sprinklers.',
+      cost: 250,
+      tree: 'hardware',
+      effect: { type: 'unlock_structure', structureId: 'auto_sprinkler' },
+      prerequisiteId: 'hw_01'
+    },
+    {
+      id: 'hw_03',
+      name: 'Electrical Defense',
+      description: 'Unlocks Copper Zappers.',
+      cost: 500,
+      tree: 'hardware',
+      effect: { type: 'unlock_structure', structureId: 'copper_zapper' },
+      prerequisiteId: 'hw_02'
     },
   ],
 };

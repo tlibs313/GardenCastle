@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { RESEARCH_TREES } from '../game/config/researchTrees';
 
 interface CareerStats {
   pestsPopped: number;
@@ -24,6 +25,13 @@ interface CareerState {
    * @param cost The RP cost to unlock.
    */
   unlockNode: (nodeId: string, cost: number) => void;
+  /**
+   * Checks if a specific plant or structure is unlocked by searching
+   * through all unlocked nodes for a matching effect.
+   * @param type The type of entity to check.
+   * @param id The ID of the plant or structure.
+   */
+  isEntityUnlocked: (type: 'plant' | 'structure', id: string) => boolean;
   /**
    * Updates career statistics with the provided partial stats.
    * highestDifficultyCleared can only be increased.
@@ -50,7 +58,7 @@ const initialState = {
 
 export const useCareerStore = create<CareerState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialState,
       addRP: (amount) => {
         if (amount <= 0) return;
@@ -67,6 +75,24 @@ export const useCareerStore = create<CareerState>()(
             unlockedNodes: [...state.unlockedNodes, nodeId],
           };
         }),
+      isEntityUnlocked: (type, id) => {
+        const { unlockedNodes } = get();
+        // Flatten all research nodes to search their effects
+        const allNodes = Object.values(RESEARCH_TREES).flat();
+        
+        return unlockedNodes.some(unlockedId => {
+          const node = allNodes.find(n => n.id === unlockedId);
+          if (!node) return false;
+          
+          if (type === 'plant' && node.effect.type === 'unlock_plant') {
+            return node.effect.plantId === id;
+          }
+          if (type === 'structure' && node.effect.type === 'unlock_structure') {
+            return node.effect.structureId === id;
+          }
+          return false;
+        });
+      },
       updateStats: (newStats) =>
         set((state) => {
           const updatedStats = { ...state.stats, ...newStats };
@@ -91,3 +117,4 @@ export const useCareerStore = create<CareerState>()(
     }
   )
 );
+

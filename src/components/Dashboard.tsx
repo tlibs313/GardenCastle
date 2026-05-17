@@ -9,7 +9,9 @@ export const Dashboard: React.FC = () => {
     pestsToSpawn, 
     incomingPests, 
     plantCount, 
-    plantLimit 
+    plantLimit,
+    isBuildMode,
+    selectedStructureType
   } = useGameStore();
   
   const { totalRP } = useCareerStore();
@@ -20,7 +22,7 @@ export const Dashboard: React.FC = () => {
     left: '50%',
     transform: 'translateX(-50%)',
     width: '100%',
-    maxWidth: '800px',
+    maxWidth: '900px',
     backgroundColor: 'rgba(31, 41, 55, 0.9)',
     borderBottom: '4px solid #6366f1',
     borderLeft: '4px solid #6366f1',
@@ -78,6 +80,23 @@ export const Dashboard: React.FC = () => {
       <div style={sectionStyle}>
         <span style={labelStyle}>Wave</span>
         <span style={valueStyle}>{waveNumber}</span>
+      </div>
+
+      {/* Mode Indicator */}
+      <div style={sectionStyle}>
+        <span style={labelStyle}>Mode</span>
+        <span style={{ 
+          ...valueStyle, 
+          color: isBuildMode ? '#f59e0b' : '#10b981',
+          fontSize: '1.1rem'
+        }}>
+          {isBuildMode ? 'BUILDING' : 'PLANTING'}
+        </span>
+        {isBuildMode && (
+          <span style={{ fontSize: '0.7rem', color: '#9ca3af' }}>
+            [{selectedStructureType.replace(/_/g, ' ').toUpperCase()}]
+          </span>
+        )}
       </div>
 
       {/* Kill Progress */}

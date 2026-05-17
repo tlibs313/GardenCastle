@@ -467,12 +467,36 @@ export class MainScene extends Phaser.Scene {
 
       if (useGameStore.getState().isBuildMode) {
         // Build mode: Place structures
-        const currentSoil = this.environmentManager.soilType;
         const structureType = useGameStore.getState().selectedStructureType;
+        
+        // Check if unlocked in Career Store
+        const isUnlocked = useCareerStore.getState().isEntityUnlocked('structure', structureType);
+        if (!isUnlocked) {
+          console.log(`Structure ${structureType} is not unlocked yet!`);
+          const lockedText = this.add.text(pointer.x, pointer.y - 20, 'LOCKED!', { 
+            fontSize: '20px', 
+            color: '#ff0000', 
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 4
+          }).setOrigin(0.5).setDepth(300);
+          
+          this.tweens.add({
+            targets: lockedText,
+            y: lockedText.y - 50,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => lockedText.destroy()
+          });
+          return;
+        }
+
+        const currentSoil = this.environmentManager.soilType;
         const anchors = (STRUCTURE_CONSTANTS.ANCHORS as any)[structureType];
 
         if (anchors && anchors.includes(currentSoil)) {
           const structure = StructureFactory.create(structureType, this, snappedX, snappedY);
+          structure.setDepth(10);
           this.structuresGroup.add(structure);
         } else {
           console.log(`Cannot place ${structureType} on ${currentSoil}. Needs: ${anchors?.join(', ')}`);
@@ -489,7 +513,7 @@ export class MainScene extends Phaser.Scene {
           fontStyle: 'bold',
           stroke: '#000000',
           strokeThickness: 4
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(300);
         
         this.tweens.add({
           targets: limitText,
@@ -511,6 +535,7 @@ export class MainScene extends Phaser.Scene {
       } else {
         plant = new ObjectivePlant(this, snappedX, snappedY);
       }
+      plant.setDepth(10);
       this.plantsGroup.add(plant);
       useGameStore.getState().updatePlantCount(this.plantsGroup.getLength());
     }

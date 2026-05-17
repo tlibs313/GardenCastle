@@ -151,7 +151,7 @@ export const EvolutionHub: React.FC<EvolutionHubProps> = ({ onClose }) => {
           </div>
 
           {/* Research Trees */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
             {/* Water Tree */}
             <div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#60a5fa', textAlign: 'center', textTransform: 'uppercase', backgroundColor: 'rgba(30, 58, 138, 0.3)', padding: '0.5rem', borderRadius: '0.25rem', marginBottom: '1rem' }}>Water Tech</h3>
@@ -168,6 +168,12 @@ export const EvolutionHub: React.FC<EvolutionHubProps> = ({ onClose }) => {
             <div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#4ade80', textAlign: 'center', textTransform: 'uppercase', backgroundColor: 'rgba(20, 83, 45, 0.3)', padding: '0.5rem', borderRadius: '0.25rem', marginBottom: '1rem' }}>Bio Lab</h3>
               {RESEARCH_TREES.biology.map(renderNode)}
+            </div>
+
+            {/* Hardware Tree */}
+            <div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#a78bfa', textAlign: 'center', textTransform: 'uppercase', backgroundColor: 'rgba(76, 29, 149, 0.3)', padding: '0.5rem', borderRadius: '0.25rem', marginBottom: '1rem' }}>Hardware</h3>
+              {RESEARCH_TREES.hardware.map(renderNode)}
             </div>
           </div>
         </div>
